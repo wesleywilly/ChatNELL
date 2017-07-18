@@ -9,6 +9,8 @@ package Model;
  *
  * @author wesley
  */
-public enum MessageInterface {
-    TELEGRAM, FACEBOOK, ALLO; 
+public class MessageInterface {
+    public static final String TELEGRAM = "telegram";
+    public static final String FACEBOOK = "facebook";
+    
 }

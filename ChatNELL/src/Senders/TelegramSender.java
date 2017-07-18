@@ -5,7 +5,9 @@
  */
 package Senders;
 
+import Model.AnswerOrder;
 import Model.Login;
+import Model.Status;
 import Model.User;
 import java.time.LocalTime;
 import org.telegram.telegrambots.TelegramApiException;
@@ -32,11 +34,51 @@ public class TelegramSender extends TelegramLongPollingBot{
         return Login.USER;
     }
     
+    public void send(AnswerOrder answer_order){
+        
+        
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.setReplyMarkup(new ReplyKeyboardHide());
+        
+        sendMessage.setChatId(answer_order.getId());
+        
+        if(answer_order.getMessage().getAnswer().length()>0){
+            sendMessage.setText(answer_order.getMessage().getAnswer());
+        }else{
+            sendMessage.setText("I'm sorry, I still do not know the answer to your question. I will read more about to get it.");
+        }
+        
+        
+        
+        
+        boolean delivered = false;
+        
+        while(!delivered){
+        try {
+            sendMessage(sendMessage); //at the end, so some magic and send the message ;)
+            delivered = true;
+            answer_order.getMessage().setStatus(Status.ANSWERED);
+            ChattingManager.ChattingManager.updateAnswer(answer_order);
+        } catch (TelegramApiException e) {
+            System.out.println("[TelegramSender] Falha ao enviar... Tentando Novamente...");
+        }
+        if(!delivered){
+            try{
+            Thread.sleep(500);
+            }catch(Exception e){
+                System.out.println(LocalTime.now().toString()+" [TelegramSender] Erro na thread.");
+            }
+        }
+        }
+        
+        
+    }
+    
     public void send(User user, String text){
         SendMessage sendMessage = new SendMessage();
         sendMessage.setReplyMarkup(new ReplyKeyboardHide());
         
-        sendMessage.setChatId(user.getId().toString());
+        sendMessage.setChatId(user.getId());
         sendMessage.setText(text);
         boolean delivered = false;
         
@@ -57,4 +99,5 @@ public class TelegramSender extends TelegramLongPollingBot{
         }
         
     }
+    
 }

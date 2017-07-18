@@ -5,6 +5,7 @@
  */
 package TelegramBot;
 
+import ChattingManager.ChattingManager;
 import Model.Login;
 import Model.MessageInterface;
 import Model.User;
@@ -36,43 +37,40 @@ public class TelegramReceiver extends TelegramLongPollingBot{
     
     @Override
     public void onUpdateReceived(Update update) {
-        User user = new User(update.getMessage().getFrom().getFirstName(), 
-                update.getMessage().getChatId().toString(), 
-                MessageInterface.TELEGRAM);
+        //Identificar o usuário
+              String id = update.getMessage().getChatId().toString();
+        
+        User user;
+        
+        if(ChattingManager.exist(id,MessageInterface.TELEGRAM)){
+            user = ChattingManager.getUser(id,MessageInterface.TELEGRAM);
+        }else{
+            String name = update.getMessage().getFrom().getFirstName();
+            user = new User(name, id, MessageInterface.TELEGRAM);
+            ChattingManager.newUser(user);
+        }
+        
+        Message telegram_message = update.getMessage();
         
         
+        System.out.println("\n"+LocalTime.now()+":[SweetMarket] "+user.getName()+": "+telegram_message.getText());
         
-        
-        Message message = update.getMessage();
-        System.out.println("\n"+LocalTime.now()+":[SweetMarket] "+user.getName()+": "+message.getText());
-        
-        if(message.isCommand()){
-            switch(message.getText()){
+        if(telegram_message.isCommand()){
+            switch(telegram_message.getText()){
                 case Command.START:
                     break;
                 case Command.HELP: 
-                    help(user);
+                    Command.help(user);
                     break;
             }
         }else{
-            //TODO: Identificar o usuário
+            //Armazenar Mensagem
+            Model.Message message = new Model.Message(System.currentTimeMillis(), update.getMessage().getText());
             
-            //TODO:Armazenar Mensagem
+            user.getMessage_history().add(message);
             
-            //Resposta somente para teste:
-            Senders.TelegramSender ts = new TelegramSender();
-            ts.send(user, "Hi "+user.getName()+"!!!");
+            ChattingManager.updateUser(user);
         }
-        
-    }
-    
-    private void help(User user){
-        String text = "I am the ChatNELL! A bot that answer questions using NELL's Knowledge Base.\n"
-                + "My developers are upgrading me frequently. So, if I wont answer one question to you today, maybe I'll can do it in future.\n\n"
-                + "If you want to see more about NELL's knowledge base, go to: http://rtw.ml.cmu.edu .";
-        
-        Senders.TelegramSender ts = new TelegramSender();
-            ts.send(user, text);
         
     }
     
